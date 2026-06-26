@@ -12,6 +12,13 @@ export function installKeyboardControls(viewer) {
 
     const watched = new Set([..."wasdijklqe"])
     addEventListener("keydown", (event) => {
+        // Ignore modifier chords (cmd+A, ctrl+S, …). On macOS the browser does
+        // not deliver keyup for a letter while Cmd is held, so a movement key
+        // pressed as part of a shortcut would otherwise stay stuck forever.
+        if (event.metaKey || event.ctrlKey || event.altKey) {
+            held.clear()
+            return
+        }
         const key = event.key.toLowerCase()
         if (watched.has(key)) {
             held.add(key)
