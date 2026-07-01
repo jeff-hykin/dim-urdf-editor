@@ -73,8 +73,13 @@
 
 <div class="toolbar">
   <label class="dim-btn sm" style="cursor:pointer">Load URDF<input id="urdf-file" type="file" accept=".urdf,.xml,application/xml" hidden /></label>
+  <select id="recent" class="numin" style="width:auto;max-width:200px" title="recently saved URDFs">
+    <option value="">Recent…</option>
+  </select>
   <span class="fname" id="urdf-name">sample</span>
   <span class="spacer"></span>
+  <span class="fname" id="save-status"></span>
+  <button class="dim-btn sm" id="save">Save</button>
   <button class="dim-btn sm" id="download">Download URDF</button>
 </div>
 

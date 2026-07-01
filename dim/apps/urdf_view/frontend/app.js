@@ -4,7 +4,8 @@
 // (mutated in place / Object.assign-repopulated) so the editor's captured
 // references stay valid while we rebuild the frame graph after add/remove/load.
 
-import { parseUrdf, setJointXyz, setJointRpy, addChildFrame, removeFrame } from "./urdf-model.js"
+import { parseUrdf, setJointXyz, setJointRpy, addChildFrame, removeFrame, serializeUrdf } from "./urdf-model.js"
+import { DimAppFrontend } from "https://esm.sh/gh/jeff-hykin/dim-app@v0.3.0/frontend.js"
 import { createViewer } from "./viewer.js"
 import { buildFrames } from "./frames.js"
 import { installKeyboardControls } from "./controls.js"
@@ -174,6 +175,55 @@ document.getElementById("urdf-file").addEventListener("change", async (e) => {
   if (!file) return
   loadUrdf(await file.text(), file.name)
 })
+
+// ── disk backend: save the edited URDF + reload recently-saved ones ────────────
+const dimApp = new DimAppFrontend()
+const saveBtn = document.getElementById("save")
+const recentEl = document.getElementById("recent")
+const saveStatusEl = document.getElementById("save-status")
+let statusTimer = null
+
+function robotName() {
+  return model.dom?.querySelector("robot")?.getAttribute("name") || "robot"
+}
+function flashStatus(text) {
+  saveStatusEl.textContent = text
+  clearTimeout(statusTimer)
+  statusTimer = setTimeout(() => { saveStatusEl.textContent = "" }, 4000)
+}
+
+saveBtn.addEventListener("click", () => {
+  dimApp.send("save", { name: robotName(), text: serializeUrdf(model) })
+  flashStatus("saving…")
+})
+recentEl.addEventListener("change", () => {
+  const file = recentEl.value
+  if (file) dimApp.send("load", { file })
+})
+
+dimApp.receiveRequest((kind, payload) => {
+  if (kind === "recent") {
+    const selected = recentEl.value
+    recentEl.innerHTML = '<option value="">Recent…</option>'
+    for (const entry of payload?.files ?? []) {
+      const option = document.createElement("option")
+      option.value = entry.file
+      option.textContent = entry.name
+      recentEl.appendChild(option)
+    }
+    recentEl.value = [...recentEl.options].some((o) => o.value === selected) ? selected : ""
+  } else if (kind === "saved") {
+    flashStatus(payload?.ok ? `saved ${payload.name}` : `save failed: ${payload?.error ?? "error"}`)
+  } else if (kind === "loaded") {
+    if (payload?.ok) {
+      loadUrdf(payload.text, payload.name)
+    } else {
+      flashStatus(`load failed: ${payload?.error ?? "error"}`)
+      recentEl.value = ""
+    }
+  }
+})
+dimApp.send("hello") // ask the backend for the current recent-files list
 
 // ── arrow density ─────────────────────────────────────────────────────────────
 let arrowScale = 0.5
