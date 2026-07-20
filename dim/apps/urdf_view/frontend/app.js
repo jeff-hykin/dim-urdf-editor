@@ -278,10 +278,26 @@ function loadUrdf(text, label) {
   document.getElementById("urdf-name").textContent = label
   applyArrowScale()
 }
-document.getElementById("urdf-file").addEventListener("change", async (e) => {
-  const file = e.target.files[0]
+async function openFile(file) {
   if (!file) return
-  loadUrdf(await file.text(), file.name)
+  const text = await file.text()
+  loadUrdf(text, file.name)
+  // Opening a file should put it in Recent. The browser hides the real path, so we
+  // cache a copy on disk via the same "save" the backend already handles. It's a
+  // silent side effect of opening, so swallow the resulting "saved" status flash.
+  suppressSavedFlash = true
+  try { dimApp.send("save", { name: file.name.replace(/\.urdf$/i, ""), text }) } catch { suppressSavedFlash = false }
+}
+document.getElementById("urdf-file").addEventListener("change", (e) => openFile(e.target.files[0]))
+
+// Drag-and-drop a URDF anywhere onto the window to open it (same as Load URDF).
+// dragover must preventDefault so the drop is allowed and the browser doesn't just
+// navigate to the file.
+window.addEventListener("dragover", (e) => e.preventDefault())
+window.addEventListener("drop", (e) => {
+  e.preventDefault()
+  const file = e.dataTransfer && e.dataTransfer.files[0]
+  if (file) openFile(file)
 })
 
 // ── disk backend: save the edited URDF + reload recently-saved ones ────────────
@@ -310,6 +326,7 @@ recentEl.addEventListener("change", () => {
 })
 
 let gotRecent = false
+let suppressSavedFlash = false // set when a "save" is an open-triggered cache, not a user Save
 dimApp.receiveRequest((kind, payload) => {
   if (kind === "recent") {
     gotRecent = true
@@ -323,7 +340,11 @@ dimApp.receiveRequest((kind, payload) => {
     }
     recentEl.value = [...recentEl.options].some((o) => o.value === selected) ? selected : ""
   } else if (kind === "saved") {
-    flashStatus(payload?.ok ? `saved ${payload.name}` : `save failed: ${payload?.error ?? "error"}`)
+    if (suppressSavedFlash) {
+      suppressSavedFlash = false
+    } else {
+      flashStatus(payload?.ok ? `saved ${payload.name}` : `save failed: ${payload?.error ?? "error"}`)
+    }
   } else if (kind === "loaded") {
     if (payload?.ok) {
       loadUrdf(payload.text, payload.name)
@@ -358,6 +379,38 @@ function applyArrowScale() {
 }
 document.getElementById("thicker").addEventListener("click", () => { arrowScale *= ARROW_STEP; applyArrowScale() })
 document.getElementById("thinner").addEventListener("click", () => { arrowScale /= ARROW_STEP; applyArrowScale() })
+
+// ── overlapping-node hint toast ───────────────────────────────────────────────
+// When the pointer hovers a spot where two frame origins overlap >=80% on screen,
+// clicking is ambiguous — nudge the user toward the tree panel to pick precisely.
+const overlapTip = document.getElementById("overlap-tip")
+let overlapDwellTimer = null
+let overlapHideTimer = null
+let overlapTipShown = false
+function showOverlapTip() {
+  overlapTip.classList.add("show")
+  overlapTipShown = true
+  clearTimeout(overlapHideTimer)
+  overlapHideTimer = setTimeout(() => {
+    overlapTip.classList.remove("show")
+    overlapTipShown = false
+  }, 6000)
+}
+viewer.renderer.domElement.addEventListener("pointermove", (event) => {
+  const over = frames.overlapAtPointer && frames.overlapAtPointer(event.clientX, event.clientY)
+  if (over) {
+    // require a 500ms dwell before showing, so brushing past overlaps doesn't trigger it
+    if (!overlapTipShown && overlapDwellTimer === null) {
+      overlapDwellTimer = setTimeout(() => {
+        overlapDwellTimer = null
+        showOverlapTip()
+      }, 500)
+    }
+  } else if (overlapDwellTimer !== null) {
+    clearTimeout(overlapDwellTimer)
+    overlapDwellTimer = null
+  }
+})
 
 // ── boot: build the sample, then install the editor once ──────────────────────
 setModel(SPOT_URDF)
