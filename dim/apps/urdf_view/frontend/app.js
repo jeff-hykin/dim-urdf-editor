@@ -5,7 +5,7 @@
 // references stay valid while we rebuild the frame graph after add/remove/load.
 
 import { parseUrdf, setJointXyz, setJointRpy, addChildFrame, removeFrame, serializeUrdf } from "./urdf-model.js"
-import { DimAppFrontend } from "https://esm.sh/gh/jeff-hykin/dim-app@v0.3.0/frontend.js"
+import { DimAppFrontend } from "https://esm.sh/gh/jeff-hykin/dim-app@v0.5.0/frontend.js"
 import { createViewer } from "./viewer.js"
 import { buildFrames } from "./frames.js"
 import { installKeyboardControls } from "./controls.js"
