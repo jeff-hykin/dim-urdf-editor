@@ -5,7 +5,7 @@ import { OrbitControls } from "https://esm.sh/three@0.160.0/examples/jsm/control
 
 export function createViewer(container) {
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x14171c)
+    scene.background = new THREE.Color(0x06090f) // the shared dark palette's page colour
 
     const camera = new THREE.PerspectiveCamera(50, 1, 0.001, 1000)
     camera.up.set(0, 0, 1) // URDF is Z-up
@@ -20,7 +20,7 @@ export function createViewer(container) {
     sun.position.set(1, -1, 2)
     scene.add(sun)
 
-    const grid = new THREE.GridHelper(2, 20, 0x2c333d, 0x222831)
+    const grid = new THREE.GridHelper(2, 20, 0x22324a, 0x141e2c)
     grid.rotation.x = Math.PI / 2 // lay flat on XY (Z-up)
     scene.add(grid)
 
