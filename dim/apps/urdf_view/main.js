@@ -11,7 +11,7 @@
 // re-saving the same robot updates it in place and floats it to the top of the
 // recent list (sorted by modification time).
 
-import { DimAppBackend } from "https://esm.sh/gh/jeff-hykin/dim-app@v0.6.0/backend.js"
+import { DimAppBackend } from "https://esm.sh/gh/jeff-hykin/dim-app@v0.6.1/backend.js"
 
 const HOME = Deno.env.get("HOME") || "."
 const SAVES_DIR = `${HOME}/.local/share/dim/urdf_saves`

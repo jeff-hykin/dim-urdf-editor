@@ -2,7 +2,7 @@
     description = "dim-urdf-editor: view and edit robot URDFs, as a dimOS Desktop app";
 
     inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
-    inputs.dim-app.url = "github:jeff-hykin/dim-app/v0.6.0";
+    inputs.dim-app.url = "github:jeff-hykin/dim-app/v0.6.1";
 
     outputs = { self, nixpkgs, dim-app }: {
         packages = dim-app.lib.forAllSystems nixpkgs (pkgs: {
