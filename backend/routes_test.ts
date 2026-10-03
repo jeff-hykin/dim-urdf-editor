@@ -1,4 +1,4 @@
-import { assert, assertEquals, assertStringIncludes } from "jsr:@std/assert@1"
+import { assert, assertEquals, assertStringIncludes } from "@std/assert"
 import { parseXml, serializeXml } from "./xml.ts"
 
 const saves = await Deno.makeTempDir()

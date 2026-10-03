@@ -15,8 +15,7 @@ export async function call<T = unknown>(method: string, path: string, body?: unk
 }
 
 /** The backend's events (api/events/ws), reconnecting with backoff; returns an unsubscribe. */
-// deno-lint-ignore no-explicit-any
-export function events(onEvent: (event: any) => void): () => void {
+export function events(onEvent: (event: { type?: string; [key: string]: unknown }) => void): () => void {
     let socket: WebSocket | null = null
     let delay = 500
     let stopped = false

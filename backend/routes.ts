@@ -197,7 +197,7 @@ async function captureView(timeoutMs = 5000) {
     const request = `c${++captureCount}`
     const answer = new Promise<unknown>((resolve) => captures.set(request, resolve))
     publishEvent({ type: "capture", request })
-    let timer = 0
+    let timer: ReturnType<typeof setTimeout> | undefined
     const timeout = new Promise<null>((resolve) => (timer = setTimeout(() => resolve(null), timeoutMs)))
     const result = await Promise.race([answer, timeout])
     clearTimeout(timer)

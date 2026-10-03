@@ -1,6 +1,6 @@
 // dimos.yaml's `agent:` must list exactly the backend's routes (method + path), so Desktop sees every endpoint even
 // before the app runs. `deno task check-endpoints` (CI runs it); `--write` rewrites dimos.yaml's agent section.
-import { parse, stringify } from "jsr:@std/yaml@1"
+import { parse, stringify } from "@std/yaml"
 import { describe } from "../backend/http.ts"
 import { DESCRIPTION, routes } from "../backend/routes.ts"
 
