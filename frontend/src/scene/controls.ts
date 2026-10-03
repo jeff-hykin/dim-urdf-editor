@@ -2,16 +2,22 @@
 // Runs alongside OrbitControls (which keeps mouse orbit/zoom).
 
 import * as THREE from "three"
+import type { Viewer } from "./viewer.ts"
 
 const MOVE_SPEED = 0.012
 const LOOK_SPEED = 0.025
 
-export function installKeyboardControls(viewer) {
+/** Returns an uninstall. */
+export function installKeyboardControls(viewer: Viewer): () => void {
     const { camera, controls, onFrame } = viewer
-    const held = new Set()
+    const held = new Set<string>()
 
     const watched = new Set([..."wasdijklqe"])
-    addEventListener("keydown", (event) => {
+    const typing = (event: KeyboardEvent) => (event.target as HTMLElement | null)?.closest?.("input, select, textarea")
+    const keydown = (event: KeyboardEvent) => {
+        if (typing(event)) {
+            return
+        }
         // Ignore modifier chords (cmd+A, ctrl+S, …). On macOS the browser does
         // not deliver keyup for a letter while Cmd is held, so a movement key
         // pressed as part of a shortcut would otherwise stay stuck forever.
@@ -23,9 +29,12 @@ export function installKeyboardControls(viewer) {
         if (watched.has(key)) {
             held.add(key)
         }
-    })
-    addEventListener("keyup", (event) => held.delete(event.key.toLowerCase()))
-    addEventListener("blur", () => held.clear())
+    }
+    const keyup = (event: KeyboardEvent) => held.delete(event.key.toLowerCase())
+    const blur = () => held.clear()
+    addEventListener("keydown", keydown)
+    addEventListener("keyup", keyup)
+    addEventListener("blur", blur)
 
     const forward = new THREE.Vector3()
     const right = new THREE.Vector3()
@@ -44,10 +53,18 @@ export function installKeyboardControls(viewer) {
 
         // WASD: translate camera and orbit target together (planar fly)
         const move = new THREE.Vector3()
-        if (held.has("w")) move.add(forward)
-        if (held.has("s")) move.sub(forward)
-        if (held.has("d")) move.add(right)
-        if (held.has("a")) move.sub(right)
+        if (held.has("w")) {
+            move.add(forward)
+        }
+        if (held.has("s")) {
+            move.sub(forward)
+        }
+        if (held.has("d")) {
+            move.add(right)
+        }
+        if (held.has("a")) {
+            move.sub(right)
+        }
         if (move.lengthSq() > 0) {
             move.normalize().multiplyScalar(MOVE_SPEED)
             camera.position.add(move)
@@ -65,12 +82,20 @@ export function installKeyboardControls(viewer) {
         // IJKL: FPS look — rotate the view direction in place (camera stays put,
         // the orbit target swings around the camera).
         offset.subVectors(controls.target, camera.position)
-        if (held.has("j")) offset.applyAxisAngle(camera.up, LOOK_SPEED)
-        if (held.has("l")) offset.applyAxisAngle(camera.up, -LOOK_SPEED)
+        if (held.has("j")) {
+            offset.applyAxisAngle(camera.up, LOOK_SPEED)
+        }
+        if (held.has("l")) {
+            offset.applyAxisAngle(camera.up, -LOOK_SPEED)
+        }
         if (held.has("i") || held.has("k")) {
             const candidate = offset.clone()
-            if (held.has("i")) candidate.applyAxisAngle(right, LOOK_SPEED)
-            if (held.has("k")) candidate.applyAxisAngle(right, -LOOK_SPEED)
+            if (held.has("i")) {
+                candidate.applyAxisAngle(right, LOOK_SPEED)
+            }
+            if (held.has("k")) {
+                candidate.applyAxisAngle(right, -LOOK_SPEED)
+            }
             // clamp so we never pitch fully vertical (avoids flipping)
             if (Math.abs(candidate.clone().normalize().dot(camera.up)) < 0.985) {
                 offset.copy(candidate)
@@ -78,4 +103,9 @@ export function installKeyboardControls(viewer) {
         }
         controls.target.copy(camera.position).add(offset)
     })
+    return () => {
+        removeEventListener("keydown", keydown)
+        removeEventListener("keyup", keyup)
+        removeEventListener("blur", blur)
+    }
 }

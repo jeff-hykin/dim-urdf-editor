@@ -1,0 +1,279 @@
+/* URDF Editor layout (on top of the shared theme.css) */
+html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+#app {
+    position: absolute;
+    inset: 44px 0 0 0;
+    background: var(--bg);
+}
+#app canvas {
+    display: block;
+}
+
+/* top toolbar */
+.toolbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 44px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.toolbar .title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+.toolbar .fname {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted-fg);
+}
+.toolbar .spacer {
+    flex: 1;
+}
+
+.hud {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    pointer-events: none;
+    z-index: 4;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--muted-fg);
+    white-space: pre;
+}
+
+.pane {
+    position: absolute;
+    z-index: 4;
+    box-shadow: var(--shadow-md);
+    font-size: 12px;
+}
+.pane h2 {
+    margin: 0 0 8px;
+}
+
+#tree {
+    top: 56px;
+    left: 12px;
+    width: 210px;
+    max-height: calc(100% - 130px);
+    overflow: auto;
+    padding: 10px 8px;
+}
+.treenode {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: var(--mono);
+}
+.treenode:hover {
+    background: var(--accent);
+}
+.treenode.sel {
+    background: var(--primary);
+    color: var(--primary-fg);
+}
+.treenode.nbr {
+    color: color-mix(in oklch, var(--warn) 70%, var(--fg));
+}
+.treenode .nm {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.treenode .rm {
+    opacity: 0;
+    color: var(--danger);
+    padding: 0 2px;
+    display: inline-flex;
+}
+.treenode:hover .rm {
+    opacity: 0.8;
+}
+.treenode .rm:hover {
+    opacity: 1;
+}
+
+#panel {
+    top: 56px;
+    right: 12px;
+    width: 248px;
+    padding: 12px;
+}
+#selected {
+    color: var(--fg);
+    font-family: var(--mono);
+    min-height: 16px;
+    font-size: 13px;
+}
+#neighbors {
+    margin: 6px 0 12px;
+    color: var(--muted-fg);
+    font-family: var(--mono);
+}
+.colhead {
+    display: grid;
+    grid-template-columns: 14px 1fr 1fr;
+    gap: 6px;
+    font-size: 9px;
+    color: var(--muted-fg);
+    margin-bottom: 2px;
+}
+.axisrow {
+    display: grid;
+    grid-template-columns: 14px 1fr 1fr;
+    gap: 6px;
+    align-items: center;
+    margin: 4px 0;
+}
+.axisrow .x {
+    color: var(--axis-x);
+}
+.axisrow .y {
+    color: var(--axis-y);
+}
+.axisrow .z {
+    color: var(--axis-z);
+}
+.numin {
+    box-sizing: border-box;
+    padding: 4px 6px;
+    font-size: 12px;
+}
+.numin:disabled {
+    opacity: 0.4;
+}
+#recent {
+    width: auto;
+    max-width: 200px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    font-size: 12px;
+}
+.panel-btns {
+    display: flex;
+    gap: 8px;
+    margin: 12px 0;
+}
+.panel-btns .dim-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+#thickness {
+    bottom: 12px;
+    right: 12px;
+    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#thickness button {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+#thickness span {
+    color: var(--muted-fg);
+}
+
+#overlap-tip {
+    position: absolute;
+    top: 56px;
+    left: 50%;
+    z-index: 6;
+    max-width: 340px;
+    text-align: center;
+    transform: translateX(-50%) translateY(-8px);
+    box-shadow: var(--shadow-md);
+    padding: 8px 14px;
+    font-size: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+}
+#overlap-tip.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.toolbar .dim-alert {
+    padding: 3px 10px;
+    font-size: 12px;
+    max-width: 420px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.field {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 6px;
+    align-items: center;
+    margin: 4px 0;
+}
+.field .dim-label {
+    margin: 0;
+}
+.section {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+.value-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    min-width: 0;
+}
+.value-row .numin {
+    padding: 4px;
+}
+.value-row .numin::-webkit-inner-spin-button {
+    display: none;
+}
+.value-row input[type="range"] {
+    flex: 1;
+    min-width: 0;
+}
+.value-row .numin {
+    flex: 1;
+    width: 0;
+    min-width: 0;
+}
+.value-row input[type="range"] + .numin {
+    flex: none;
+    width: 56px;
+}
+.field > select, .field > input {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+.numin.wide {
+    width: 100%;
+}

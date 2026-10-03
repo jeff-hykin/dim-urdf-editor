@@ -1,18 +1,28 @@
 {
-    description = "dim-urdf-editor: view and edit robot URDFs, as a dimOS Desktop app";
-
+    description = "dim-urdf-editor: view and edit robot URDFs, as a dimOS Desktop app (`nix build .#dimosApp`)";
     inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
-    inputs.dim-app.url = "github:jeff-hykin/dim-app/v0.6.1";
-
-    outputs = { self, nixpkgs, dim-app }: {
-        packages = dim-app.lib.forAllSystems nixpkgs (pkgs: {
-            dimosApp = dim-app.lib.mkDimosApp {
-                inherit pkgs;
-                name = "dim-urdf-editor";
-                src = self;
-                frontend = "dim/apps/urdf_view/frontend";
-                backend = "dim/apps/urdf_view/main.js";
-            };
-        });
+    nixConfig = {
+        extra-substituters = [ "https://dimos-desktop.cachix.org" ];
+        extra-trusted-public-keys = [ "dimos-desktop.cachix.org-1:A4P35aGJGmCan92LWyamtSFXMqaVE+VRFYnrJ8QMTeQ=" ];
     };
+    outputs = { self, nixpkgs }:
+        let
+            systems = [ "aarch64-darwin" "x86_64-darwin" "x86_64-linux" "aarch64-linux" ];
+            forAll = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
+        in {
+            packages = forAll (pkgs: rec {
+                frontend = pkgs.buildNpmPackage {
+                    pname = "dim-urdf-editor-frontend";
+                    version = "0.1.0";
+                    src = ./frontend;
+                    # `nix build .#frontend` prints the right hash when package-lock.json changes
+                    npmDepsHash = "sha256-6wZucWbUL3tx3OVB7CH5soByAtVXiIVUNn6TpqAQsZ8=";
+                    installPhase = "cp -r dist $out";
+                };
+                dimosApp = pkgs.writeShellScriptBin "dimos-app-server" ''
+                    exec ${pkgs.deno}/bin/deno run -A --no-lock ${./backend}/main.ts --frontend ${frontend} "$@"
+                '';
+                default = dimosApp;
+            });
+        };
 }
