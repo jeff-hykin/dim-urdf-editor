@@ -1,51 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="URDF View">
-    <defs>
-        <marker
-            id="uf-z"
-            viewBox="0 0 10 10"
-            markerWidth="3.4"
-            markerHeight="3.4"
-            refX="1.5"
-            refY="5"
-            orient="auto"
-            markerUnits="strokeWidth"
-        >
-            <path d="M0 0 L10 5 L0 10 Z" fill="#5aa9ff" />
-        </marker>
-        <marker
-            id="uf-x"
-            viewBox="0 0 10 10"
-            markerWidth="3.4"
-            markerHeight="3.4"
-            refX="1.5"
-            refY="5"
-            orient="auto"
-            markerUnits="strokeWidth"
-        >
-            <path d="M0 0 L10 5 L0 10 Z" fill="#ff6b6b" />
-        </marker>
-        <marker
-            id="uf-y"
-            viewBox="0 0 10 10"
-            markerWidth="3.4"
-            markerHeight="3.4"
-            refX="1.5"
-            refY="5"
-            orient="auto"
-            markerUnits="strokeWidth"
-        >
-            <path d="M0 0 L10 5 L0 10 Z" fill="#5be37a" />
-        </marker>
-    </defs>
-    <!-- triad nudged so its visual center lands at the viewBox center -->
-    <g transform="translate(2 4.5)">
-        <!-- z up (blue) -->
-        <path d="M30 34 L30 15" stroke="#5aa9ff" stroke-width="3" stroke-linecap="butt" marker-end="url(#uf-z)" />
-        <!-- x down-right (red) -->
-        <path d="M30 34 L47 44" stroke="#ff6b6b" stroke-width="3" stroke-linecap="butt" marker-end="url(#uf-x)" />
-        <!-- y down-left (green) -->
-        <path d="M30 34 L13 44" stroke="#5be37a" stroke-width="3" stroke-linecap="butt" marker-end="url(#uf-y)" />
-        <!-- origin -->
-        <circle cx="30" cy="34" r="3.4" fill="#cfe8f2" />
-    </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="#d66155" role="img" aria-label="URDF Editor">
+  <!-- dimOS app icon set: 24 grid, 2px round strokes, one hue per app at equal lightness, 24% tint for the duotone fill -->
+  <path d="M5 18h9a1 1 0 0 1 1 1v2H4v-2a1 1 0 0 1 1-1z" fill="currentColor" fill-opacity=".24" stroke="none"/>
+  <path d="M5 18h9a1 1 0 0 1 1 1v2H4v-2a1 1 0 0 1 1-1z"/>
+  <path d="M9.5 18V14.5M8.9 12.6L7.4 8.4M9.5 6.1L16.5 5.25"/>
+  <circle cx="9.5" cy="12.6" r="1.9" fill="currentColor" fill-opacity=".24"/>
+  <circle cx="7.6" cy="6.4" r="1.9" fill="currentColor" fill-opacity=".24"/>
+  <path d="M20 3h-3.5v4.5H20"/>
 </svg>
