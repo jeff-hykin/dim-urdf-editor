@@ -2,9 +2,21 @@
 // come for free, plus connection lines and neighbor highlighting.
 
 import * as THREE from "three"
+import { cssColor, withAlpha, onThemeChange } from "./theme-colors.js"
 import { Line2 } from "https://esm.sh/three@0.160.0/examples/jsm/lines/Line2.js?external=three"
 import { LineMaterial } from "https://esm.sh/three@0.160.0/examples/jsm/lines/LineMaterial.js?external=three"
 import { LineGeometry } from "https://esm.sh/three@0.160.0/examples/jsm/lines/LineGeometry.js?external=three"
+
+// Theme-dependent scene colors, re-read from theme.css tokens on every light/dark change.
+const palette = {}
+function readPalette() {
+    Object.assign(palette, {
+        x: cssColor("--axis-x"), y: cssColor("--axis-y"), z: cssColor("--axis-z"),
+        fg: cssColor("--fg"), card: cssColor("--card"), bg: cssColor("--bg"),
+        muted: cssColor("--muted-fg"), line: cssColor("--input"),
+        hover: cssColor("--info"), neighbor: cssColor("--warn"),
+    })
+}
 
 // A text label as an in-scene sprite, so 3D geometry (the arrows) occludes it.
 function makeLabelSprite(text) {
@@ -36,11 +48,11 @@ function makeLabelSprite(text) {
 
     function setState(state) {
         if (state === "selected") {
-            draw("rgba(255,255,255,0.95)", "#14171c")
+            draw(withAlpha(palette.fg, 0.95), palette.bg)
         } else if (state === "neighbor") {
-            draw("rgba(255,212,93,0.95)", "#14171c")
+            draw(withAlpha(palette.neighbor, 0.95), palette.bg)
         } else {
-            draw("rgba(20,23,28,0.7)", "#cdd3da")
+            draw(withAlpha(palette.card, 0.7), palette.fg)
         }
         material.opacity = state === "dim" ? 0.2 : 1
         texture.needsUpdate = true
@@ -55,7 +67,6 @@ const HEAD_LENGTH = 0.022
 const LABEL_MARGIN = 0.014
 const LABEL_SCREEN_K = 0.02 // label world-height per unit camera distance (constant on-screen size)
 const SELECTED_ARROW_BOOST = 1.6 // selected frame's arrows grow so they stand out among overlapping nodes
-const COLORS = { x: 0xff5d5d, y: 0x5dff8a, z: 0x5d9bff }
 const AXIS_DIR = { x: new THREE.Vector3(1, 0, 0), y: new THREE.Vector3(0, 1, 0), z: new THREE.Vector3(0, 0, 1) }
 const scratchHSL = { h: 0, s: 0, l: 0 }
 
@@ -69,7 +80,7 @@ function quaternionFromRpy(rpy) {
 
 function makeAxis(name, linkName) {
     const group = new THREE.Group()
-    const color = COLORS[name]
+    const color = palette[name]
     const shaftLength = AXIS_LENGTH - HEAD_LENGTH
 
     const shaft = new THREE.Mesh(
@@ -95,6 +106,8 @@ function makeAxis(name, linkName) {
     }
 
     const meta = { linkName, kind: "axis", axis: name }
+    shaft.material.userData.axis = name
+    head.material.userData.axis = name
     group.userData = meta
     shaft.userData = meta
     head.userData = meta
@@ -141,6 +154,7 @@ function makeVisualMesh(visual) {
 
 export function buildFrames(viewer, model) {
     const scene = viewer.scene
+    readPalette()
     const framesByLink = new Map()
     const pickables = []
     const axisGroups = []
@@ -150,7 +164,7 @@ export function buildFrames(viewer, model) {
 
         const sphere = new THREE.Mesh(
             new THREE.SphereGeometry(0.008, 16, 12),
-            new THREE.MeshBasicMaterial({ color: 0x9aa7b4 }),
+            new THREE.MeshBasicMaterial({ color: palette.muted }),
         )
         sphere.userData = { linkName, kind: "sphere" }
         group.add(sphere)
@@ -198,8 +212,8 @@ export function buildFrames(viewer, model) {
 
     // connection lines between parent and child frame origins (world space).
     // Fat lines (Line2) so width is controllable — a selected frame's lines thicken.
-    const normalLineMaterial = new LineMaterial({ color: 0x3a4350, linewidth: 1.5 })
-    const highlightLineMaterial = new LineMaterial({ color: 0xffd45d, linewidth: 3.5 })
+    const normalLineMaterial = new LineMaterial({ color: palette.line, linewidth: 1.5 })
+    const highlightLineMaterial = new LineMaterial({ color: palette.neighbor, linewidth: 3.5 })
     function syncLineResolution() {
         const size = new THREE.Vector2()
         viewer.renderer.getDrawingBufferSize(size)
@@ -274,7 +288,7 @@ export function buildFrames(viewer, model) {
             }
         }
         frame.sphere.material.color.set(
-            isHovered ? 0x5fe3ff : isSelected ? 0xffffff : isNeighbor ? 0xffd45d : 0x9aa7b4,
+            isHovered ? palette.hover : isSelected ? palette.fg : isNeighbor ? palette.neighbor : palette.muted,
         )
         frame.sphere.scale.setScalar(isHovered ? 2.4 : isSelected ? 1.8 : 1)
         frame.label.setState(
@@ -294,6 +308,21 @@ export function buildFrames(viewer, model) {
             line.material = touches && linkName ? highlightLineMaterial : normalLineMaterial
         }
     }
+
+    // light/dark flip: re-read tokens, recolor axis bases + lines, restyle every frame (labels redraw)
+    const stopThemeListener = onThemeChange(() => {
+        readPalette()
+        for (const frame of framesByLink.values()) {
+            for (const material of frame.markerMaterials) {
+                if (material.userData.axis) {
+                    material.userData.baseColor.set(palette[material.userData.axis])
+                }
+            }
+            styleFrame(frame.name)
+        }
+        normalLineMaterial.color.set(palette.line)
+        highlightLineMaterial.color.set(palette.neighbor)
+    })
 
     function setHovered(linkName) {
         const previous = hovered
@@ -418,6 +447,7 @@ export function buildFrames(viewer, model) {
         normalLineMaterial.dispose()
         highlightLineMaterial.dispose()
         window.removeEventListener("resize", syncLineResolution)
+        stopThemeListener()
     }
 
     return {

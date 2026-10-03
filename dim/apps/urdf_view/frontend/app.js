@@ -10,6 +10,7 @@ import { createViewer } from "./viewer.js"
 import { buildFrames } from "./frames.js"
 import { installKeyboardControls } from "./controls.js"
 import { installEditor } from "./editor.js"
+import { dimIcon } from "./dim-icons.js"
 
 const RAD_TO_DEG = 180 / Math.PI
 const DEG_TO_RAD = Math.PI / 180
@@ -230,7 +231,7 @@ function rebuildTree() {
     if (linkName !== model.root) {
       const rm = document.createElement("span")
       rm.className = "rm"
-      rm.textContent = "✕"
+      rm.innerHTML = dimIcon("close", 13)
       rm.title = "remove frame"
       rm.addEventListener("click", (e) => { e.stopPropagation(); doRemove(linkName) })
       node.appendChild(rm)

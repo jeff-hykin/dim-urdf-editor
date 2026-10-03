@@ -1,11 +1,12 @@
 // viewer.js — three.js scene scaffolding (Z-up, like URDF) and the render loop.
 
 import * as THREE from "three"
+import { cssColor, onThemeChange } from "./theme-colors.js"
 import { OrbitControls } from "https://esm.sh/three@0.160.0/examples/jsm/controls/OrbitControls.js?external=three"
 
 export function createViewer(container) {
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x06090f) // the shared dark palette's page colour
+    scene.background = new THREE.Color()
 
     const camera = new THREE.PerspectiveCamera(50, 1, 0.001, 1000)
     camera.up.set(0, 0, 1) // URDF is Z-up
@@ -20,9 +21,20 @@ export function createViewer(container) {
     sun.position.set(1, -1, 2)
     scene.add(sun)
 
-    const grid = new THREE.GridHelper(2, 20, 0x22324a, 0x141e2c)
-    grid.rotation.x = Math.PI / 2 // lay flat on XY (Z-up)
-    scene.add(grid)
+    let grid = null
+    function applyTheme() {
+        scene.background.set(cssColor("--bg"))
+        if (grid) {
+            scene.remove(grid)
+            grid.geometry.dispose()
+            grid.material.dispose()
+        }
+        grid = new THREE.GridHelper(2, 20, cssColor("--input"), cssColor("--border"))
+        grid.rotation.x = Math.PI / 2 // lay flat on XY (Z-up)
+        scene.add(grid)
+    }
+    applyTheme()
+    onThemeChange(applyTheme)
 
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = true
