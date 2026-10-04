@@ -62,7 +62,8 @@ function makeLabelSprite(text: string) {
         } else {
             draw(withAlpha(palette.card, 0.7), palette.fg)
         }
-        material.opacity = state === "dim" ? 0.2 : 1
+        // dimmed labels stay readable on paper (Research), where 20% ink on white all but disappears
+        material.opacity = state === "dim" ? (document.documentElement.dataset.dimTheme === "research" ? 0.5 : 0.2) : 1
         texture.needsUpdate = true
     }
     setState("default")
