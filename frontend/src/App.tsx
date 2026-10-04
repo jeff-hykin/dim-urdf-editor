@@ -8,6 +8,7 @@ import { installKeyboardControls } from "./scene/controls.ts"
 import { installEditor } from "./scene/editor.ts"
 import { buildFrames, type Frames } from "./scene/frames.ts"
 import { createViewer, type Viewer } from "./scene/viewer.ts"
+import { ThemeToggle } from "./ThemeToggle.tsx"
 
 const RAD_TO_DEG = 180 / Math.PI
 const ARROW_STEP = 1.25
@@ -391,6 +392,7 @@ export function App() {
                     Save
                 </button>
                 <a className="dim-btn sm" href="api/export" download>Download URDF</a>
+                <ThemeToggle />
             </div>
 
             <div id="app" ref={container}></div>

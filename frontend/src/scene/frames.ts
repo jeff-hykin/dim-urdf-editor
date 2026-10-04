@@ -31,7 +31,7 @@ type LabelState = "selected" | "neighbor" | "dim" | "default"
 function makeLabelSprite(text: string) {
     const canvas = document.createElement("canvas")
     const context = canvas.getContext("2d")!
-    const font = "32px ui-monospace, monospace"
+    const font = '32px "IBM Plex Mono", ui-monospace, monospace'
     context.font = font
     const padding = 14
     const width = Math.ceil(context.measureText(text).width) + padding * 2

@@ -277,3 +277,6 @@ html, body {
 .numin.wide {
     width: 100%;
 }
+.toolbar a.dim-btn {
+    text-decoration: none;
+}

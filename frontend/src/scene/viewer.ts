@@ -33,13 +33,13 @@ export function createViewer(container: HTMLElement): Viewer {
 
     let grid: THREE.GridHelper | null = null
     function applyTheme() {
-        ;(scene.background as THREE.Color).set(cssColor("--bg"))
+        ;(scene.background as THREE.Color).set(cssColor("--scene-bg"))
         if (grid) {
             scene.remove(grid)
             grid.geometry.dispose()
             ;(grid.material as THREE.Material).dispose()
         }
-        grid = new THREE.GridHelper(2, 20, cssColor("--input"), cssColor("--border"))
+        grid = new THREE.GridHelper(2, 20, cssColor("--scene-grid-major"), cssColor("--scene-grid"))
         grid.rotation.x = Math.PI / 2 // lay flat on XY (Z-up)
         scene.add(grid)
     }
