@@ -91,7 +91,7 @@ html, body {
     color: var(--primary-fg);
 }
 .treenode.nbr {
-    color: color-mix(in oklch, var(--warn) 70%, var(--fg));
+    color: var(--warn);
 }
 .treenode .nm {
     flex: 1;
@@ -279,4 +279,9 @@ html, body {
 }
 .toolbar a.dim-btn {
     text-decoration: none;
+}
+@media (max-width: 600px) {
+    .toolbar .dim-title {
+        display: none;
+    }
 }

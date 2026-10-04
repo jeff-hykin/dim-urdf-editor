@@ -155,6 +155,7 @@ function JointPanel({ joint, act }: { joint: Joint; act: (method: string, path: 
                         <span className="dim-label">value</span>
                         <div className="value-row">
                             <input
+                                className="dim-range"
                                 type="range"
                                 min={lower}
                                 max={upper}
@@ -341,6 +342,7 @@ export function App() {
     return (
         <>
             <div className="toolbar">
+                <span className="dim-title">URDF Editor</span>
                 <label className="dim-btn sm" style={{ cursor: "pointer" }}>
                     Load URDF
                     <input
