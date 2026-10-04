@@ -284,4 +284,37 @@ html, body {
     .toolbar .dim-title {
         display: none;
     }
+    /* phone: the toolbar scrolls sideways, the frame tree sits above the selected frame instead of under it, and the
+       keyboard hints (no keyboard) go away */
+    .toolbar {
+        overflow-x: auto;
+        gap: 8px;
+        padding: 0 10px;
+    }
+    .toolbar > * {
+        flex: none;
+    }
+    .toolbar .fname {
+        max-width: 40vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .hud {
+        display: none;
+    }
+    #tree {
+        left: 10px;
+        right: 10px;
+        width: auto;
+        max-height: 28vh;
+    }
+    #panel {
+        top: calc(56px + 28vh + 8px);
+        left: 10px;
+        right: 10px;
+        width: auto;
+        max-height: calc(100% - 56px - 28vh - 8px - 64px);
+        overflow: auto;
+    }
 }
