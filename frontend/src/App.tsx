@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { call } from "./api.ts"
 import { appEvents } from "./dim-app/events.js"
-import { useBackendState } from "./dim-app/react.js"
+import { EmptyState, useBackendState } from "./dim-app/react.js"
 import { Icon } from "./icons.tsx"
 import { type Joint, JOINT_TYPES, type Model, MOVABLE, neighborsOf, type Tree, tree } from "./model.ts"
 import { installKeyboardControls } from "./scene/controls.ts"
@@ -180,6 +180,8 @@ function JointPanel({ joint, act }: { joint: Joint; act: (method: string, path: 
     )
 }
 
+const SAMPLE_HINT_KEY = "dim-urdf-editor.sample-hint-closed"
+
 export function App() {
     const [model, { refresh: refreshModel, error: modelError }] = useBackendState<Model>("api/model", {
         debounceMs: 16,
@@ -188,6 +190,13 @@ export function App() {
     const [error, setError] = useState<string | null>(null)
     const [status, setStatus] = useState("")
     const [overlapTip, setOverlapTip] = useState(false)
+    const [sampleHintClosed, setSampleHintClosed] = useState(() => {
+        try {
+            return localStorage.getItem(SAMPLE_HINT_KEY) === "1"
+        } catch {
+            return false
+        }
+    })
     const container = useRef<HTMLDivElement>(null)
     const viewer = useRef<Viewer | null>(null)
     const frames = useRef<Frames | null>(null)
@@ -400,6 +409,43 @@ export function App() {
             </div>
 
             <div id="app" ref={container}></div>
+            {!model && modelError && (
+                <EmptyState
+                    layer
+                    testId="onboard-model-error"
+                    tone="warn"
+                    label="No robot model"
+                    title="Couldn't load the robot model"
+                    body={`The URDF Editor's server answered: ${modelError.message}. If it keeps failing, restart the app from Desktop's App Store.`}
+                    actions={[
+                        { label: "Try again", onClick: () => refresh() },
+                        { label: "Open the App Store", app: "appstore", primary: false },
+                    ]}
+                />
+            )}
+            {model && model.path === null && model.label === "spot (sample)" && !sampleHintClosed && (
+                <div id="sample-hint" className="dim-alert info" data-testid="onboard-sample-hint">
+                    <span className="grow">
+                        This is a sample robot. Open a <code>.urdf</code>{" "}
+                        (Load URDF, or drop one anywhere) to edit your own.
+                    </span>
+                    <button
+                        type="button"
+                        className="dim-btn sm ghost icon"
+                        title="Got it"
+                        onClick={() => {
+                            setSampleHintClosed(true)
+                            try {
+                                localStorage.setItem(SAMPLE_HINT_KEY, "1")
+                            } catch {
+                                // storage blocked: hidden until reload
+                            }
+                        }}
+                    >
+                        <Icon name="close" size={13} />
+                    </button>
+                </div>
+            )}
             <div id="overlap-tip" className={`dim-panel${overlapTip ? " show" : ""}`}>
                 For overlapping nodes, use the panel on the left to select the one you want
             </div>
