@@ -1,7 +1,9 @@
 // URDF Editor page: the 3D frame view, the frame tree and the selected-frame panel. Every action is a backend endpoint
-// (backend/routes.ts); the page draws GET api/model and redraws on each `changed` event, so an agent's edits show here.
+// (backend/routes.ts); the page draws GET api/model (useBackendState: re-read on each state/model event over zenoh), so an agent's edits show here.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { call, events } from "./api.ts"
+import { call } from "./api.ts"
+import { appEvents } from "./dim-app/events.js"
+import { useBackendState } from "./dim-app/react.js"
 import { Icon } from "./icons.tsx"
 import { type Joint, JOINT_TYPES, type Model, MOVABLE, neighborsOf, type Tree, tree } from "./model.ts"
 import { installKeyboardControls } from "./scene/controls.ts"
@@ -179,7 +181,9 @@ function JointPanel({ joint, act }: { joint: Joint; act: (method: string, path: 
 }
 
 export function App() {
-    const [model, setModel] = useState<Model | null>(null)
+    const [model, { refresh: refreshModel, error: modelError }] = useBackendState<Model>("api/model", {
+        debounceMs: 16,
+    })
     const [files, setFiles] = useState<SavedFile[]>([])
     const [error, setError] = useState<string | null>(null)
     const [status, setStatus] = useState("")
@@ -188,7 +192,6 @@ export function App() {
     const viewer = useRef<Viewer | null>(null)
     const frames = useRef<Frames | null>(null)
     const builtStructure = useRef(-1)
-    const latestRevision = useRef(-1)
     const statusTimer = useRef(0)
 
     const flash = (text: string) => {
@@ -199,18 +202,19 @@ export function App() {
 
     const refresh = useCallback(async () => {
         try {
-            const next = await call<Model>("GET", "api/model")
-            if (next.revision >= latestRevision.current) {
-                latestRevision.current = next.revision
-                setModel(next)
-            }
+            await refreshModel()
             setFiles((await call<{ files: SavedFile[] }>("GET", "api/files")).files)
         } catch (e) {
             setError((e as Error).message)
         }
-    }, [])
+    }, [refreshModel])
+    useEffect(() => {
+        if (modelError) {
+            setError(modelError.message)
+        }
+    }, [modelError])
 
-    /** Calls an endpoint; its `changed` event redraws. Errors show in the toolbar. */
+    /** Calls an endpoint; its state/model event redraws. Errors show in the toolbar. */
     const act = useCallback(async (method: string, path: string, body?: unknown) => {
         try {
             const result = await call(method, path, body)
@@ -266,10 +270,8 @@ export function App() {
     // backend state, and the agent's changes as they happen
     useEffect(() => {
         refresh()
-        return events((event) => {
-            if (event.type === "changed") {
-                refresh()
-            } else if (event.type === "capture" && viewer.current) {
+        return appEvents((event) => {
+            if (event.type === "capture" && viewer.current) {
                 const v = viewer.current
                 const data = v.capture().replace(/^data:image\/png;base64,/, "")
                 call("POST", `api/captures/${event.request}`, {

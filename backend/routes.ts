@@ -1,6 +1,7 @@
 // Every action the URDF Editor has, as an endpoint (http.ts). The open URDF lives here, so the page and Desktop's agent
-// edit the same robot: the page draws GET api/model and redraws on each `changed` event.
-import { HttpError, publishEvent, type Route } from "./http.ts"
+// edit the same robot: the page draws GET api/model and re-reads it on each `stateChanged("model")` (frontend topic
+// state/model, through Desktop's relay); view captures are asked for on the frontend topic `events`.
+import { HttpError, publishEvent, type Route, stateChanged } from "./http.ts"
 import { SAMPLE_URDF } from "./sample.ts"
 import { MOVABLE, Urdf, type Vec3 } from "./urdf.ts"
 
@@ -35,7 +36,7 @@ function changed({ structural = false, edit = false } = {}) {
         editor.dirty = true
     }
     editor.revision++
-    publishEvent({ type: "changed", structure: editor.structure, revision: editor.revision })
+    stateChanged("model")
 }
 
 /** Runs an edit to the URDF with an undo snapshot; a failed edit leaves the URDF as it was. */

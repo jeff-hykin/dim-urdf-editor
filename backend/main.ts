@@ -1,7 +1,7 @@
 // dimos-app-server: this app's API and its built frontend on the unix socket Desktop gives, else a port. What Desktop
 // passes: the DIMOS_APP env var, one JSON object (docs/apps.md; dimos_app.ts, with older Desktops' flags as fallback).
 import { dimosApp } from "./dimos_app.ts"
-import { eventsSocket, handle } from "./http.ts"
+import { handle } from "./http.ts"
 import { answerCapture, DESCRIPTION, routes } from "./routes.ts"
 
 function flag(name: string): string | undefined {
@@ -36,9 +36,6 @@ async function file(path: string): Promise<Response> {
 
 async function serve(request: Request): Promise<Response> {
     const path = new URL(request.url).pathname
-    if (path === "/api/events/ws") {
-        return eventsSocket(request)
-    }
     // the page's answer to a GET api/view capture request (a page-to-backend reply, not an action, so not a route)
     const capture = path.match(/^\/api\/captures\/([\w-]+)$/)
     if (capture && request.method === "POST") {
