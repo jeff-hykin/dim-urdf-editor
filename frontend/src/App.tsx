@@ -352,7 +352,8 @@ export function App() {
     return (
         <>
             <div className="toolbar">
-                <span className="dim-title">URDF Editor</span>
+                {/* inside Desktop, its window bar already names the app */}
+                {window.parent === window && <span className="dim-title">URDF Editor</span>}
                 <label className="dim-btn sm" style={{ cursor: "pointer" }}>
                     Load URDF
                     <input
