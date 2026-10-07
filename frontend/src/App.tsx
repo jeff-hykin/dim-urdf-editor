@@ -2,8 +2,8 @@
 // (backend/routes.ts); the page draws GET api/model (useBackendState: re-read on each state/model event over zenoh), so an agent's edits show here.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { call } from "./api.ts"
-import { appEvents } from "./dim-app/events.js"
-import { EmptyState, useBackendState } from "./dim-app/react.js"
+import { appEvents } from "./dim-app/source/events.js"
+import { EmptyState, useBackendState } from "./dim-app/source/react.js"
 import { Icon } from "./icons.tsx"
 import { type Joint, JOINT_TYPES, type Model, MOVABLE, neighborsOf, type Tree, tree } from "./model.ts"
 import { installKeyboardControls } from "./scene/controls.ts"
