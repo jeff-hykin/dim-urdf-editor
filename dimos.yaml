@@ -1,5 +1,5 @@
 title: URDF Editor
-dimos-desktop-api: ">=2 <3"
+spec-version: v1.0 # the dimos.yaml spec version this file follows
 # the dim-app SDK's zenoh client (backend state, events): /zenoh-web and how it finds it
 zenoh-web: ">=0.4 <0.5"
 # what its server answers only its own pages (its agent: endpoints are the public API)
