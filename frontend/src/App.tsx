@@ -409,7 +409,7 @@ export function App() {
 
     const topBar = (
         <TopBar
-            title={globalThis.parent === globalThis ? "URDF Editor" : undefined}
+            title={globalThis.top === globalThis.self ? "URDF Editor" : undefined}
             left={
                 <Row gap={8}>
                     <Button
