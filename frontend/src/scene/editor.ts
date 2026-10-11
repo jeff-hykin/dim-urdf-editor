@@ -1,7 +1,7 @@
 // Picking and axis-constrained drag editing. The drag previews locally; the new origin goes to the backend on release.
 import * as THREE from "three"
 import { AXIS_DIR, type Frames, type Pickable } from "./frames.ts"
-import type { Viewer } from "./viewer.ts"
+import type { Viewer } from "dimos-react/three"
 
 // parameter along axis line (point A, unit dir U) closest to the pick ray
 function closestParamOnAxis(ray: THREE.Ray, A: THREE.Vector3, U: THREE.Vector3) {

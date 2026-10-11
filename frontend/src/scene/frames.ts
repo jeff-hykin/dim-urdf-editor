@@ -1,28 +1,39 @@
 // An axis triad per link frame, nested so world transforms come for free, plus connection lines, neighbor
 // highlighting, and each joint posed at its value (rotation about / slide along its axis).
 import * as THREE from "three"
-import { Line2 } from "three/addons/lines/Line2.js"
-import { LineGeometry } from "three/addons/lines/LineGeometry.js"
-import { LineMaterial } from "three/addons/lines/LineMaterial.js"
+import { cssColor, FatLines, type Viewer } from "dimos-react/three"
 import { type Joint, type Model, neighborsOf, tree, type Visual } from "../model.ts"
-import { cssColor, onThemeChange, withAlpha } from "./theme-colors.ts"
-import type { Viewer } from "./viewer.ts"
 
-// Theme-dependent scene colors, re-read from theme.css tokens on every light/dark change.
+const TOKENS = {
+    x: "--axis-x",
+    y: "--axis-y",
+    z: "--axis-z",
+    fg: "--fg",
+    card: "--card",
+    bg: "--bg",
+    muted: "--muted-fg",
+    line: "--muted-fg",
+    hover: "--info",
+    neighbor: "--warn",
+}
+// Theme-dependent scene colors ("#rrggbb"), re-read from the theme's tokens on every skin change.
 const palette: Record<string, string> = {}
 function readPalette() {
-    Object.assign(palette, {
-        x: cssColor("--axis-x"),
-        y: cssColor("--axis-y"),
-        z: cssColor("--axis-z"),
-        fg: cssColor("--fg"),
-        card: cssColor("--card"),
-        bg: cssColor("--bg"),
-        muted: cssColor("--muted-fg"),
-        line: cssColor("--input"),
-        hover: cssColor("--info"),
-        neighbor: cssColor("--warn"),
-    })
+    for (const [name, token] of Object.entries(TOKENS)) {
+        palette[name] = `#${cssColor(`var(${token})`).getHexString()}`
+    }
+}
+
+/** "#rrggbb" + alpha → "rgba(...)" for canvas fills */
+function withAlpha(hex: string, alpha: number): string {
+    const value = parseInt(hex.slice(1), 16)
+    return `rgba(${value >> 16}, ${(value >> 8) & 255}, ${value & 255}, ${alpha})`
+}
+
+/** Calls `callback` on every skin change (dimos-react's DimThemeProvider); returns an unsubscribe. */
+function onThemeChange(callback: () => void): () => void {
+    globalThis.addEventListener("dimos-react-theme", callback)
+    return () => globalThis.removeEventListener("dimos-react-theme", callback)
 }
 
 type LabelState = "selected" | "neighbor" | "dim" | "default"
@@ -63,7 +74,7 @@ function makeLabelSprite(text: string) {
             draw(withAlpha(palette.card, 0.7), palette.fg)
         }
         // dimmed labels stay readable on paper (Research), where 20% ink on white all but disappears
-        material.opacity = state === "dim" ? (document.documentElement.dataset.dimTheme === "research" ? 0.5 : 0.2) : 1
+        material.opacity = state === "dim" ? (document.documentElement.hasAttribute("data-dr-dark") ? 0.2 : 0.5) : 1
         texture.needsUpdate = true
     }
     setState("default")
@@ -239,44 +250,40 @@ export function buildFrames(viewer: Viewer, model: Model) {
         }
     }
 
-    // connection lines between parent and child frame origins (world space); fat lines so a selection can thicken
-    const normalLineMaterial = new LineMaterial({ color: palette.line, linewidth: 1.5 })
-    const highlightLineMaterial = new LineMaterial({ color: palette.neighbor, linewidth: 3.5 })
-    function syncLineResolution() {
-        const size = new THREE.Vector2()
-        viewer.renderer.getDrawingBufferSize(size)
-        normalLineMaterial.resolution.set(size.x, size.y)
-        highlightLineMaterial.resolution.set(size.x, size.y)
-    }
-    syncLineResolution()
-    globalThis.addEventListener("resize", syncLineResolution)
-
-    const lines = new Map<string, Line2>()
+    // connection lines between parent and child frame origins (world space): thin ones, and thick ones for the
+    // connections of the selected frame
+    const normalLines = new FatLines(viewer.resolution, { width: 1.5, color: palette.line, opacity: 0.6 })
+    const highlightLines = new FatLines(viewer.resolution, { width: 3.5, color: palette.neighbor })
+    normalLines.object.userData.noPick = true
+    highlightLines.object.userData.noPick = true
+    scene.add(normalLines.object, highlightLines.object)
+    const lines = new Map<string, string>() // child → parent
     for (const joint of model.jointList) {
-        if (!framesByLink.get(joint.parent) || !framesByLink.get(joint.child)) {
-            continue
+        if (framesByLink.get(joint.parent) && framesByLink.get(joint.child)) {
+            lines.set(joint.child, joint.parent)
         }
-        const geometry = new LineGeometry()
-        geometry.setPositions([0, 0, 0, 0, 0, 0])
-        const line = new Line2(geometry, normalLineMaterial)
-        line.userData = { parent: joint.parent, child: joint.child }
-        scene.add(line)
-        lines.set(joint.child, line)
     }
 
+    let selected: string | null = null
+    const highlighted = (child: string, parent: string) =>
+        !!selected && (child === selected || parent === selected || neighborsOf(current, selected).includes(child))
     function refreshLines() {
         scene.updateMatrixWorld(true)
         const a = new THREE.Vector3()
         const b = new THREE.Vector3()
-        for (const [child, line] of lines) {
-            framesByLink.get(line.userData.parent)!.group.getWorldPosition(a)
+        normalLines.clear()
+        highlightLines.clear()
+        for (const [child, parent] of lines) {
+            framesByLink.get(parent)!.group.getWorldPosition(a)
             framesByLink.get(child)!.group.getWorldPosition(b)
-            line.geometry.setPositions([a.x, a.y, a.z, b.x, b.y, b.z])
+            ;(highlighted(child, parent) ? highlightLines : normalLines).push(a.x, a.y, a.z, b.x, b.y, b.z)
         }
+        normalLines.commit()
+        highlightLines.commit()
+        viewer.requestRender()
     }
     refreshLines()
 
-    let selected: string | null = null
     let hovered: string | null = null
     let globalArrowScale = 1
 
@@ -327,11 +334,7 @@ export function buildFrames(viewer: Viewer, model: Model) {
         for (const name of framesByLink.keys()) {
             styleFrame(name)
         }
-        const neighbors = selected ? new Set(neighborsOf(current, selected)) : new Set<string>()
-        for (const [child, line] of lines) {
-            const touches = child === selected || line.userData.parent === selected || neighbors.has(child)
-            line.material = touches && selected ? highlightLineMaterial : normalLineMaterial
-        }
+        refreshLines()
     }
 
     // light/dark flip: re-read tokens, recolor axis bases + lines, restyle every frame (labels redraw)
@@ -345,8 +348,9 @@ export function buildFrames(viewer: Viewer, model: Model) {
             }
             styleFrame(frame.name)
         }
-        normalLineMaterial.color.set(palette.line)
-        highlightLineMaterial.color.set(palette.neighbor)
+        normalLines.material.color.set(palette.line)
+        highlightLines.material.color.set(palette.neighbor)
+        viewer.requestRender()
     })
 
     function setHovered(linkName: string | null) {
@@ -354,6 +358,7 @@ export function buildFrames(viewer: Viewer, model: Model) {
         hovered = linkName
         styleFrame(previous)
         styleFrame(linkName)
+        viewer.requestRender()
     }
 
     function setArrowScale(factor: number) {
@@ -361,6 +366,7 @@ export function buildFrames(viewer: Viewer, model: Model) {
         for (const name of framesByLink.keys()) {
             applyArrowScaleToFrame(name)
         }
+        viewer.requestRender()
     }
 
     /** Same links and joints, new origins / values: move the frames without rebuilding. */
@@ -452,15 +458,11 @@ export function buildFrames(viewer: Viewer, model: Model) {
     }
 
     function dispose() {
-        scene.remove(rootGroup)
-        for (const line of lines.values()) {
-            scene.remove(line)
-            line.geometry.dispose()
-        }
-        normalLineMaterial.dispose()
-        highlightLineMaterial.dispose()
-        globalThis.removeEventListener("resize", syncLineResolution)
+        scene.remove(rootGroup, normalLines.object, highlightLines.object)
+        normalLines.dispose()
+        highlightLines.dispose()
         stopThemeListener()
+        viewer.requestRender()
     }
 
     return {
