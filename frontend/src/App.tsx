@@ -426,7 +426,6 @@ export function App() {
                     </Button>
                     <Select
                         size="sm"
-                        value={null}
                         placeholder="Recent…"
                         title="recently saved URDFs"
                         onMouseDown={() => refresh()}
@@ -547,7 +546,7 @@ export function App() {
                                         icon="close"
                                         size="sm"
                                         label="remove frame"
-                                        onClick={(event: MouseEvent) => {
+                                        onClick={(event) => {
                                             event.stopPropagation()
                                             removeLink(node.id)
                                         }}
