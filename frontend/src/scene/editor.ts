@@ -22,8 +22,7 @@ export type EditorCallbacks = {
 
 /** `getFrames` returns the current frames (they are rebuilt when the tree changes). Returns an uninstall. */
 export function installEditor(viewer: Viewer, getFrames: () => Frames | null, callbacks: EditorCallbacks): () => void {
-    const { camera, controls, renderer } = viewer
-    const canvas = renderer.domElement
+    const { camera, controls, canvas } = viewer
     const raycaster = new THREE.Raycaster()
     const pointer = new THREE.Vector2()
     let drag: {

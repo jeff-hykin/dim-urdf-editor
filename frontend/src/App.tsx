@@ -290,7 +290,7 @@ export function App() {
                 dwell = null
             }
         }
-        const canvas = viewer.renderer.domElement
+        const canvas = viewer.canvas
         canvas.addEventListener("pointermove", pointermove)
         return () => {
             canvas.removeEventListener("pointermove", pointermove)

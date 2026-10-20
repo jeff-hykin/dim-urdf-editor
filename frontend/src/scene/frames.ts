@@ -437,7 +437,7 @@ export function buildFrames(viewer: Viewer, model: Model) {
 
     // True when the pointer sits over two frame spheres that overlap >= 80% on screen ("which node am I clicking?").
     function overlapAtPointer(clientX: number, clientY: number) {
-        const rect = viewer.renderer.domElement.getBoundingClientRect()
+        const rect = viewer.canvas.getBoundingClientRect()
         const px = clientX - rect.left
         const py = clientY - rect.top
         const under: Circle[] = []
