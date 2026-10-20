@@ -7,8 +7,16 @@ caches:
     - url: "https://dimos-desktop.cachix.org"
       key: "dimos-desktop.cachix.org-1:A4P35aGJGmCan92LWyamtSFXMqaVE+VRFYnrJ8QMTeQ="
 provides:
-    # what its server answers only its own pages (its endpoints: below are the public API)
-    private:
+    openapi: 3.1.0
+    info:
+        title: URDF Editor
+        version: 1.0.0
+        description: >-
+            URDF Editor: view and edit a robot's URDF frame tree (links, joints, origins, axes, limits), pose its joints,
+            and save it
+        x-when: you need to inspect, pose or edit a robot's URDF (links, joints, frames)
+    # what its server answers only its own pages (its paths: below are the public API)
+    x-private:
         - api/state/*
         - api/joints/*
         - api/links/*
@@ -16,250 +24,329 @@ provides:
         - api/files/*
         - api/model/*
         - api/events/*
-    when: you need to inspect, pose or edit a robot's URDF (links, joints, frames)
-    description: >-
-        URDF Editor: view and edit a robot's URDF frame tree (links, joints, origins, axes, limits), pose its joints, and
-        save it
-    endpoints:
-        - method: GET
-          path: api/state
-          when: you need to know which URDF is open and its current status
-          description: >-
-              The open URDF's status as JSON: robot (name), label and path (where it came from or was saved),
-              unsavedChanges, root link, links and joints (counts), movableJoints (names), jointValues (joint → posed
-              position), selected link, arrowScale, canUndo
-          role: context
-        - method: GET
-          path: api/model
-          when: you need every link and joint of the open URDF in detail
-          description: >-
-              The whole frame tree: everything GET api/state returns, plus linkList (every link with its primitive/mesh
-              visuals) and jointList (every joint: type, parent, child, origin xyz/rpy in radians, axis, limits, current
-              posed value)
-        - method: GET
-          path: api/view
-          when: you want to see what the user sees in the 3D view
-          description: >-
-              What the user sees: the 3D view as a PNG image (base64), the camera's position, target and fov, the robot's
-              name and the selected link. Needs the app open in Desktop (503 if no page answers within 5 s)
-          role: view
-        - method: GET
-          path: api/files
-          when: you need to find a URDF file to open
-          description: >-
-              URDF files: without `dir`, the saved ones (file, name, path, savedAt; most recent first; open one with
-              POST api/open `file`); with `dir`, the paths of every .urdf under it (up to 6 folders deep, at most 500;
-              open one with POST api/open `path`)
-          params:
-              dir:
-                  type: string
-                  description: absolute directory to search for .urdf files (optional; omit to list the saved files)
-        - method: POST
-          path: api/open
-          when: you want to open a saved or on-disk URDF file
-          description: >-
-              Open a URDF in place of the current one (unsaved edits, the pose, the selection and undo are dropped): a
-              saved one by `file` (from GET api/files), or any .urdf/.xml on disk by absolute `path`. Returns the new
-              GET api/state
-          params:
-              file:
-                  type: string
-                  description: 'a saved file''s name, e.g. spot.urdf'
-              path:
-                  type: string
-                  description: absolute path to a .urdf / .xml file
-        - method: POST
-          path: api/open-sample
-          when: you want to load the built-in sample robot
-          description: >-
-              Open the built-in sample robot (a Spot-like quadruped) in place of the current URDF; returns the new GET
-              api/state
-        - method: POST
-          path: api/load
-          when: you have URDF XML text to open
-          description: >-
-              Open URDF text (what the page's Load button and drag-and-drop send) in place of the current URDF; a copy goes
-              into the saved files. Returns the new GET api/state, with path set to the saved copy
-          params:
-              text:
-                  type: string
-                  required: true
-                  description: the URDF XML
-              name:
-                  type: string
-                  description: "a name for it, e.g. the file name (also the saved copy's name; default robot.urdf)"
-        - method: POST
-          path: api/save
-          when: you need to save the edited URDF
-          description: >-
-              Save the edited URDF: into the saved files (by robot name, or `name`), or to an absolute `path` ending in
-              .urdf. Clears unsavedChanges; returns { file, path } of what was written
-          params:
-              name:
-                  type: string
-                  description: 'saved-file name (default: the robot''s name)'
-              path:
-                  type: string
-                  description: absolute path to write instead (must end in .urdf)
-        - method: GET
-          path: api/export
-          when: you need the edited URDF's XML text
-          description: >-
-              The edited URDF's XML as an application/xml download named <robot>.modified.urdf (the page's Download
-              button); nothing is written to disk
-        - method: POST
-          path: api/select
-          when: you want to point the user at a link, or clear the selection
-          description: >-
-              Select a link (highlights it and its neighbors in the view, opens it in the panel); omit link to clear.
-              Returns { selected }
-          params:
-              link:
-                  type: string
-                  description: link name (omit, or empty, to clear the selection)
-        - method: POST
-          path: "api/joints/{joint}/value"
-          when: you want to move one joint to see a pose
-          description: >-
-              Pose one joint: its position (radians for revolute/continuous, meters for prismatic), within its limits.
-              Only revolute, continuous and prismatic joints move. Posing doesn't change the URDF. Returns { joint, value }
-          params:
-              joint:
-                  type: string
-                  required: true
-                  description: joint name
-              value:
-                  type: number
-                  required: true
-                  description: "the position: radians (revolute/continuous) or meters (prismatic), inside the joint's limits"
-        - method: POST
-          path: api/joint-values
-          when: you want to set a pose across several joints at once
-          description: >-
-              Pose several joints at once: { values: { jointName: position, ... } } (all or none are applied; same rules
-              as posing one joint). Returns { jointValues } (every posed joint)
-          params:
-              values:
-                  type: object
-                  required: true
-                  description: "joint name → position (radians, or meters for prismatic)"
-        - method: POST
-          path: api/joint-values/reset
-          when: you want the robot back in its zero pose
-          description: >-
-              Put every joint back at zero (the URDF's zero pose); doesn't change the URDF. Returns { jointValues: {} }
-        - method: POST
-          path: "api/joints/{joint}/origin"
-          when: you need to move or rotate where a joint's child frame sits
-          description: >-
-              Move a joint's origin (where its child frame sits in the parent frame): xyz in meters, rpy in radians; give
-              either or both. An undoable edit to the URDF; returns the updated joint
-          params:
-              joint:
-                  type: string
-                  required: true
-                  description: joint name
-              xyz:
-                  type: array
-                  items:
-                      type: number
-                  description: "[x, y, z] meters (optional; unchanged if omitted)"
-              rpy:
-                  type: array
-                  items:
-                      type: number
-                  description: "[roll, pitch, yaw] radians (optional; unchanged if omitted)"
-        - method: POST
-          path: "api/joints/{joint}/properties"
-          when: you need to rename a joint or change its type, axis or limits
-          description: >-
-              Edit a joint: rename it, change its type (fixed, revolute, continuous, prismatic, floating, planar), its axis,
-              or its lower/upper limits (null removes one); only the fields given change. An undoable edit to the URDF;
-              returns the updated joint
-          params:
-              joint:
-                  type: string
-                  required: true
-                  description: joint name
-              name:
-                  type: string
-                  description: "new name (letters, digits, _ . -; must not already exist)"
-              type:
-                  type: string
-                  description: "new type: fixed, revolute, continuous, prismatic, floating or planar"
-              axis:
-                  type: array
-                  items:
-                      type: number
-                  description: "[x, y, z] axis of motion in the joint frame (not all zero)"
-              lower:
-                  type: number
-                  description: "lower limit: radians, or meters for prismatic (null removes it)"
-              upper:
-                  type: number
-                  description: "upper limit: radians, or meters for prismatic (null removes it)"
-        - method: POST
-          path: "api/links/{link}/properties"
-          when: you need to rename a link
-          description: >-
-              Edit a link: rename it (the joints that use it follow). An undoable edit to the URDF; returns { link } (the
-              new name)
-          params:
-              link:
-                  type: string
-                  required: true
-                  description: link name
-              name:
-                  type: string
-                  required: true
-                  description: new name
-        - method: POST
-          path: "api/links/{link}/children"
-          when: you need to add a new frame under a link
-          description: >-
-              Add a child frame (a new link on a fixed joint) under a link and select it. An undoable edit to the URDF;
-              returns { link, parent } (the new link's name and its parent)
-          params:
-              link:
-                  type: string
-                  required: true
-                  description: parent link
-              name:
-                  type: string
-                  description: "new link's name (letters, digits, _ . -; default frame_N)"
-              xyz:
-                  type: array
-                  items:
-                      type: number
-                  description: "origin in the parent, meters (default 0 0 0)"
-        - method: DELETE
-          path: "api/links/{link}"
-          when: you need to remove a link from the tree
-          description: >-
-              Remove a link and its joint; its children move up to its parent (the root can't be removed). An undoable
-              edit to the URDF; returns { removed } (the link's name)
-          params:
-              link:
-                  type: string
-                  required: true
-                  description: link name
-        - method: POST
-          path: api/undo
-          when: you need to revert the last URDF edit
-          description: >-
-              Undo the last edit to the URDF (origins, properties, added/removed frames; up to 100 back). Returns the new
-              GET api/state; 409 if there is nothing to undo
-        - method: POST
-          path: api/arrow-scale
-          when: the frame axis arrows are too big or too small to read
-          description: >-
-              Set the size of the axis arrows drawn at each frame in the view (display only, not the URDF). Returns
-              { arrowScale }
-          params:
-              scale:
-                  type: number
-                  required: true
-                  description: arrow size, 0.25 to 5 (default 0.5)
+    paths:
+        /api/state:
+            get:
+                description: >-
+                    The open URDF's status as JSON: robot (name), label and path (where it came from or was saved), unsavedChanges,
+                    root link, links and joints (counts), movableJoints (names), jointValues (joint → posed position), selected
+                    link, arrowScale, canUndo
+                x-when: you need to know which URDF is open and its current status
+                x-dimos-role: context
+        /api/model:
+            get:
+                description: >-
+                    The whole frame tree: everything GET api/state returns, plus linkList (every link with its primitive/mesh
+                    visuals) and jointList (every joint: type, parent, child, origin xyz/rpy in radians, axis, limits, current
+                    posed value)
+                x-when: you need every link and joint of the open URDF in detail
+        /api/view:
+            get:
+                description: >-
+                    What the user sees: the 3D view as a PNG image (base64), the camera's position, target and fov, the robot's
+                    name and the selected link. Needs the app open in Desktop (503 if no page answers within 5 s)
+                x-when: you want to see what the user sees in the 3D view
+                x-dimos-role: view
+        /api/files:
+            get:
+                description: >-
+                    URDF files: without `dir`, the saved ones (file, name, path, savedAt; most recent first; open one with
+                    POST api/open `file`); with `dir`, the paths of every .urdf under it (up to 6 folders deep, at most 500;
+                    open one with POST api/open `path`)
+                x-when: you need to find a URDF file to open
+                parameters:
+                    - name: dir
+                      in: query
+                      schema:
+                          type: string
+                      description: absolute directory to search for .urdf files (optional; omit to list the saved files)
+        /api/open:
+            post:
+                description: >-
+                    Open a URDF in place of the current one (unsaved edits, the pose, the selection and undo are dropped):
+                    a saved one by `file` (from GET api/files), or any .urdf/.xml on disk by absolute `path`. Returns the
+                    new GET api/state
+                x-when: you want to open a saved or on-disk URDF file
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    file:
+                                        type: string
+                                        description: a saved file's name, e.g. spot.urdf
+                                    path:
+                                        type: string
+                                        description: absolute path to a .urdf / .xml file
+        /api/open-sample:
+            post:
+                description: >-
+                    Open the built-in sample robot (a Spot-like quadruped) in place of the current URDF; returns the new GET
+                    api/state
+                x-when: you want to load the built-in sample robot
+        /api/load:
+            post:
+                description: >-
+                    Open URDF text (what the page's Load button and drag-and-drop send) in place of the current URDF; a copy
+                    goes into the saved files. Returns the new GET api/state, with path set to the saved copy
+                x-when: you have URDF XML text to open
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    text:
+                                        type: string
+                                        description: the URDF XML
+                                    name:
+                                        type: string
+                                        description: a name for it, e.g. the file name (also the saved copy's name; default
+                                            robot.urdf)
+                                required:
+                                    - text
+        /api/save:
+            post:
+                description: >-
+                    Save the edited URDF: into the saved files (by robot name, or `name`), or to an absolute `path` ending
+                    in .urdf. Clears unsavedChanges; returns { file, path } of what was written
+                x-when: you need to save the edited URDF
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    name:
+                                        type: string
+                                        description: 'saved-file name (default: the robot''s name)'
+                                    path:
+                                        type: string
+                                        description: absolute path to write instead (must end in .urdf)
+        /api/export:
+            get:
+                description: >-
+                    The edited URDF's XML as an application/xml download named <robot>.modified.urdf (the page's Download
+                    button); nothing is written to disk
+                x-when: you need the edited URDF's XML text
+        /api/select:
+            post:
+                description: >-
+                    Select a link (highlights it and its neighbors in the view, opens it in the panel); omit link to clear.
+                    Returns { selected }
+                x-when: you want to point the user at a link, or clear the selection
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    link:
+                                        type: string
+                                        description: link name (omit, or empty, to clear the selection)
+        /api/joints/{joint}/value:
+            post:
+                description: >-
+                    Pose one joint: its position (radians for revolute/continuous, meters for prismatic), within its limits.
+                    Only revolute, continuous and prismatic joints move. Posing doesn't change the URDF. Returns { joint,
+                    value }
+                x-when: you want to move one joint to see a pose
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    value:
+                                        type: number
+                                        description: 'the position: radians (revolute/continuous) or meters (prismatic), inside
+                                            the joint''s limits'
+                                required:
+                                    - value
+                parameters:
+                    - name: joint
+                      in: path
+                      required: true
+                      schema:
+                          type: string
+                      description: joint name
+        /api/joint-values:
+            post:
+                description: >-
+                    Pose several joints at once: { values: { jointName: position, ... } } (all or none are applied; same rules
+                    as posing one joint). Returns { jointValues } (every posed joint)
+                x-when: you want to set a pose across several joints at once
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    values:
+                                        type: object
+                                        description: joint name → position (radians, or meters for prismatic)
+                                required:
+                                    - values
+        /api/joint-values/reset:
+            post:
+                description: >-
+                    Put every joint back at zero (the URDF's zero pose); doesn't change the URDF. Returns { jointValues: {}
+                    }
+                x-when: you want the robot back in its zero pose
+        /api/joints/{joint}/origin:
+            post:
+                description: >-
+                    Move a joint's origin (where its child frame sits in the parent frame): xyz in meters, rpy in radians;
+                    give either or both. An undoable edit to the URDF; returns the updated joint
+                x-when: you need to move or rotate where a joint's child frame sits
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    xyz:
+                                        type: array
+                                        items:
+                                            type: number
+                                        description: "[x, y, z] meters (optional; unchanged if omitted)"
+                                    rpy:
+                                        type: array
+                                        items:
+                                            type: number
+                                        description: "[roll, pitch, yaw] radians (optional; unchanged if omitted)"
+                parameters:
+                    - name: joint
+                      in: path
+                      required: true
+                      schema:
+                          type: string
+                      description: joint name
+        /api/joints/{joint}/properties:
+            post:
+                description: >-
+                    Edit a joint: rename it, change its type (fixed, revolute, continuous, prismatic, floating, planar), its
+                    axis, or its lower/upper limits (null removes one); only the fields given change. An undoable edit to
+                    the URDF; returns the updated joint
+                x-when: you need to rename a joint or change its type, axis or limits
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    name:
+                                        type: string
+                                        description: new name (letters, digits, _ . -; must not already exist)
+                                    type:
+                                        type: string
+                                        description: "new type: fixed, revolute, continuous, prismatic, floating or planar"
+                                    axis:
+                                        type: array
+                                        items:
+                                            type: number
+                                        description: "[x, y, z] axis of motion in the joint frame (not all zero)"
+                                    lower:
+                                        type: number
+                                        description: "lower limit: radians, or meters for prismatic (null removes it)"
+                                    upper:
+                                        type: number
+                                        description: "upper limit: radians, or meters for prismatic (null removes it)"
+                parameters:
+                    - name: joint
+                      in: path
+                      required: true
+                      schema:
+                          type: string
+                      description: joint name
+        /api/links/{link}/properties:
+            post:
+                description: >-
+                    Edit a link: rename it (the joints that use it follow). An undoable edit to the URDF; returns { link }
+                    (the new name)
+                x-when: you need to rename a link
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    name:
+                                        type: string
+                                        description: new name
+                                required:
+                                    - name
+                parameters:
+                    - name: link
+                      in: path
+                      required: true
+                      schema:
+                          type: string
+                      description: link name
+        /api/links/{link}/children:
+            post:
+                description: >-
+                    Add a child frame (a new link on a fixed joint) under a link and select it. An undoable edit to the URDF;
+                    returns { link, parent } (the new link's name and its parent)
+                x-when: you need to add a new frame under a link
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    name:
+                                        type: string
+                                        description: new link's name (letters, digits, _ . -; default frame_N)
+                                    xyz:
+                                        type: array
+                                        items:
+                                            type: number
+                                        description: origin in the parent, meters (default 0 0 0)
+                parameters:
+                    - name: link
+                      in: path
+                      required: true
+                      schema:
+                          type: string
+                      description: parent link
+        /api/links/{link}:
+            delete:
+                description: >-
+                    Remove a link and its joint; its children move up to its parent (the root can't be removed). An undoable
+                    edit to the URDF; returns { removed } (the link's name)
+                x-when: you need to remove a link from the tree
+                parameters:
+                    - name: link
+                      in: path
+                      required: true
+                      schema:
+                          type: string
+                      description: link name
+        /api/undo:
+            post:
+                description: >-
+                    Undo the last edit to the URDF (origins, properties, added/removed frames; up to 100 back). Returns the
+                    new GET api/state; 409 if there is nothing to undo
+                x-when: you need to revert the last URDF edit
+        /api/arrow-scale:
+            post:
+                description: >-
+                    Set the size of the axis arrows drawn at each frame in the view (display only, not the URDF). Returns
+                    { arrowScale }
+                x-when: the frame axis arrows are too big or too small to read
+                requestBody:
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    scale:
+                                        type: number
+                                        description: arrow size, 0.25 to 5 (default 0.5)
+                                required:
+                                    - scale
 # prebuilt cross builds Desktop downloads (if a cache above has them) before building dimosApp, per machine type
 nix:
     cache:

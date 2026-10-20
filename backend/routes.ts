@@ -1,12 +1,17 @@
 // Every action the URDF Editor has, as an endpoint (http.ts). The open URDF lives here, so the page and Desktop's agent
 // edit the same robot: the page draws GET api/model and re-reads it on each `stateChanged("model")` (frontend topic
 // state/model, through Desktop's relay); view captures are asked for on the frontend topic `events`.
-import { HttpError, publishEvent, type Route, stateChanged } from "./http.ts"
+import { HttpError, type Info, publishEvent, type Route, stateChanged } from "./http.ts"
 import { SAMPLE_URDF } from "./sample.ts"
 import { MOVABLE, Urdf, type Vec3 } from "./urdf.ts"
 
-export const DESCRIPTION =
-    "URDF Editor: view and edit a robot's URDF frame tree (links, joints, origins, axes, limits), pose its joints, and save it"
+export const INFO: Info = {
+    title: "URDF Editor",
+    version: "1.0.0",
+    description:
+        "URDF Editor: view and edit a robot's URDF frame tree (links, joints, origins, axes, limits), pose its " +
+        "joints, and save it",
+}
 
 export const SAVES_DIR = Deno.env.get("URDF_SAVES_DIR") ?? `${Deno.env.get("HOME") ?? "."}/.local/share/dim/urdf_saves`
 const SAFE_FILE = /^[A-Za-z0-9._-]+\.urdf$/

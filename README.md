@@ -7,8 +7,8 @@ limits and names, pose joints, add/remove frames, and save or download the edite
 dimos-desktop install https://github.com/jeff-hykin/dim-urdf-editor
 ```
 
-Every action is an HTTP endpoint (`backend/routes.ts`, listed in `dimos.yaml`'s `agent:`), so Desktop's agent can drive
-the editor the same way the page does.
+Every action is an HTTP endpoint (`backend/routes.ts`, served as `openapi.json` and listed in `dimos.yaml`), so
+Desktop's agent can drive the editor the same way the page does.
 
 Develop: `deno task dev` (backend on :8787) and `cd frontend && npm run dev`. Check: `deno task test`,
 `deno task check`, `cd frontend && npm run typecheck`, `nix build .#dimosApp`.

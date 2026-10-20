@@ -2,7 +2,7 @@
 // passes: the DIMOS_APP env var, one JSON object and the whole interface (docs/apps.md; dimos_app.ts).
 import { dimosApp } from "./dimos_app.ts"
 import { handle } from "./http.ts"
-import { answerCapture, DESCRIPTION, routes } from "./routes.ts"
+import { answerCapture, INFO, routes } from "./routes.ts"
 
 function flag(name: string): string | undefined {
     const index = Deno.args.indexOf(`--${name}`)
@@ -42,7 +42,7 @@ async function serve(request: Request): Promise<Response> {
         const answered = answerCapture(capture[1], await request.json().catch(() => null))
         return Response.json({ ok: answered }, { status: answered ? 200 : 404 })
     }
-    return (await handle(request, routes, DESCRIPTION)) ?? file(path)
+    return (await handle(request, routes, INFO)) ?? file(path)
 }
 
 const socket = dimosApp.socket
