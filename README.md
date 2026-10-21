@@ -10,8 +10,9 @@ dimos-desktop install https://github.com/jeff-hykin/dim-urdf-editor
 Every action is an HTTP endpoint (`backend/routes.ts`, served as `openapi.json` and listed in `dimos.yaml`), so
 Desktop's agent can drive the editor the same way the page does.
 
-Develop: `deno task dev` (backend on :8787) and `cd frontend && npm run dev`. Check: `deno task test`,
-`deno task check`, `cd frontend && npm run typecheck`, `nix build .#dimosApp`.
+Develop: `deno task dev` (backend on :8787) and `cd frontend && deno task dev`. Check: `deno task test`,
+`deno task check`, `cd frontend && deno task typecheck`, `nix build .#dimosApp` (`deno task update-hashes` after
+changing frontend/deno.json or deno.lock).
 
 Licensed under the Apache License, Version 2.0.
 
