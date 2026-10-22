@@ -1,8 +1,18 @@
 title: URDF Editor
-spec-version: v1.0 # the dimos.yaml spec version this file follows
+spec-version: v1.3 # the dimos.yaml spec version this file follows
+version: "0.1.9" # this app's own version (its latest release tag)
 uses:
     # the dim-app SDK's zenoh client (backend state, events): the zenoh bridge and how it finds it
     "@zenoh-gateway": ">=0.5 <0.6"
+# spec v1.2: what the page may do on zenoh (zenoh's ACL config); it only subscribes
+zenoh:
+    default_permission: deny
+    read:
+        # dim-app's useBackendState: this app's own state/<key> events (Desktop's <namespace>/apps/<app>/frontend)
+        - id: own-frontend-topics
+          messages: [declare_subscriber, put]
+          key_exprs: ["dimos-desktop/*/apps/dim-urdf-editor/frontend/**"]
+          permission: allow
 caches:
     - url: "https://dimos-desktop.cachix.org"
       key: "dimos-desktop.cachix.org-1:A4P35aGJGmCan92LWyamtSFXMqaVE+VRFYnrJ8QMTeQ="
