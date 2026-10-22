@@ -1,7 +1,13 @@
 title: URDF Editor
-spec-version: v1.3 # the dimos.yaml spec version this file follows
+spec-version: v1.4 # the dimos.yaml spec version this file follows
 version: "0.1.10" # this app's own version (its latest release tag)
 uses:
+    "@desktop-gateway":
+        # the dim-app SDK: the backend pushes state/events to its open pages, openApp finds the App Store among
+        # the installed apps, and the zenoh client asks where the zenoh-gateway and this app's namespace are
+        - POST /ui/apps/{pkg}/frontend/{topic}
+        - GET /info/apps
+        - GET /management/gateways/zenoh
     # the dim-app SDK's zenoh client (backend state, events): the zenoh bridge and how it finds it
     "@zenoh-gateway": ">=0.5 <0.6"
 caches:
