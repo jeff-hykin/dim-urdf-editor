@@ -1,6 +1,6 @@
 title: URDF Editor
 spec-version: v1.4 # the dimos.yaml spec version this file follows
-version: "0.2.1" # this app's own version (its latest release tag)
+version: "0.2.2" # this app's own version (its latest release tag)
 uses:
     "@desktop-gateway":
         # the dim-app SDK: the backend pushes state/events to its open pages, openApp finds the App Store among
