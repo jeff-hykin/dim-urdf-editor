@@ -4,7 +4,7 @@ A URDF frame-tree viewer/editor, as a dimOS Desktop app: open a URDF, click/drag
 limits and names, pose joints, add/remove frames, and save or download the edited URDF.
 
 ```sh
-dimos-desktop install https://github.com/jeff-hykin/dim-urdf-editor
+dimos-desktop install https://github.com/dimensionalOS/dim-urdf-editor
 ```
 
 Every action is an HTTP endpoint (`backend/routes.ts`, served as `openapi.json` and listed in `dimos.yaml`), so
