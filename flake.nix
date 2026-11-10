@@ -48,9 +48,9 @@
                         outputHashAlgo = "sha256";
                         outputHash = {
                             aarch64-darwin = "sha256-oO+P8sfp+UkDIpcmAzY4FqTDhNeop0Y4AHHbxGjwf+Q=";
-                            x86_64-darwin = "";
+                            x86_64-darwin = "sha256-mCuHzi54Zhh4P4lNiq8bTDYyvc6RXoWDYZKW2sxJzrM=";
                             x86_64-linux = "sha256-UHGas9HqIgcuMMgGITTDW7mGb93EZH7dw7TW0SpmCJw=";
-                            aarch64-linux = "";
+                            aarch64-linux = "sha256-ClPYW8y4sARYumBUMrq1Ntpyy73cDF1sVob461bjc8M=";
                         }.${pkgs.stdenv.hostPlatform.system};
                     };
 
